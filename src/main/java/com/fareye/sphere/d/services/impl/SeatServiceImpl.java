@@ -82,7 +82,6 @@ public class SeatServiceImpl implements SeatService {
         Seat seat = seatRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Seat", "id", seatId));
 
-        // CHECK: Cannot delete seat if it has active future bookings
         boolean hasFutureBookings = seat.getBookings() != null && seat.getBookings().stream()
                 .anyMatch(booking -> booking.getStatus() == BookingStatus.ACTIVE && !booking.getBookedDate().isBefore(LocalDate.now()));
         
