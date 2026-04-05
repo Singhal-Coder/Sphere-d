@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface SeatRepository extends JpaRepository<Seat, Long> {
     List<Seat> findByDepartment(Department department);
+    boolean existsByGridXAndGridYAndDepartment(int gridX, int gridY, Department department);
 }

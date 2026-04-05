@@ -7,6 +7,7 @@ import com.fareye.sphere.d.entities.enums.AssetStatus;
 import com.fareye.sphere.d.entities.enums.RequestStatus;
 import com.fareye.sphere.d.entities.enums.Role;
 import com.fareye.sphere.d.exceptions.InvalidIdException;
+import com.fareye.sphere.d.exceptions.ResourceInUseException;
 import com.fareye.sphere.d.exceptions.ResourceNotFoundException;
 import com.fareye.sphere.d.mappers.AssetMapper;
 import com.fareye.sphere.d.repositories.AssetRepository;
@@ -43,7 +44,7 @@ public class AssetServiceImpl implements AssetService {
 
     @Override
     public AssetDto getAssetBySerial(String serial) {
-        Asset asset=getEntityFromSerial(serial);
+        Asset asset = getEntityFromSerial(serial);
         return assetMapper.toDto(asset);
     }
 
@@ -55,7 +56,7 @@ public class AssetServiceImpl implements AssetService {
 
     @Override
     public AssetDto updateAsset(String serial, AssetDto assetDto){
-        Asset asset=getEntityFromSerial(serial);
+        Asset asset = getEntityFromSerial(serial);
 
         assetMapper.updateAssetFromDto(assetDto, asset);
         Asset updatedAsset = assetRepository.save(asset);
@@ -64,23 +65,19 @@ public class AssetServiceImpl implements AssetService {
 
     @Override
     public String changeStatus(String serial, AssetStatus status){
-        Asset asset=getEntityFromSerial(serial);
+        Asset asset = getEntityFromSerial(serial);
         asset.setStatus(status);
         assetRepository.save(asset);
-        if (status==AssetStatus.BROKEN){
+        
+        if (status == AssetStatus.BROKEN){
             requestService.createRequest(
                     RequestDto.builder()
                             .status(RequestStatus.DRAFT)
                             .requestedForCategory(asset.getCategory())
                             .lastModifierRole(Role.SYSTEM)
                             .requestedForId(
-                                    idUtils.formatUserId(
-                                            asset.
-                                                    getOwner().
-                                                    getUserId()
-                                    ).orElseThrow(
-                                            () -> new InvalidIdException(serial)
-                                    )
+                                    idUtils.formatUserId(asset.getOwner().getUserId())
+                                            .orElseThrow(() -> new InvalidIdException(serial))
                             )
                             .build()
             );
@@ -91,7 +88,12 @@ public class AssetServiceImpl implements AssetService {
 
     @Override
     public void deleteAsset(String serial) {
-        Asset asset=getEntityFromSerial(serial);
+        Asset asset = getEntityFromSerial(serial);
+
+        // CHECK: Cannot soft delete if asset is currently ASSIGNED
+        if (asset.getStatus() == AssetStatus.ASSIGNED) {
+            throw new ResourceInUseException("Cannot delete an asset that is currently assigned to a user.");
+        }
 
         asset.setIsActive(false);
         assetRepository.save(asset);
