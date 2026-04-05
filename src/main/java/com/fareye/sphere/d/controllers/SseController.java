@@ -24,6 +24,6 @@ public class SseController {
             @RequestParam Department department,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         
-        return sseService.subscribe(department.name(), date);
+        return sseService.subscribe(department, date);
     }
 }

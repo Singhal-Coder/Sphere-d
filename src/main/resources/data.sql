@@ -14,3 +14,5 @@ ADD CONSTRAINT asset_restriction_check CHECK (
     UPPER(TRIM(status)) <> 'AVAILABLE'
     OR owner IS NULL
 );
+
+INSERT INTO users()

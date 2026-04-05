@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class SeatController {
     private final SecurityUtils securityUtils;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN','SYSTEM')")
     public ResponseEntity<ApiResponse<SeatDto>> createSeat(@RequestBody @Valid SeatDto seatDto){
         SeatDto createdSeat = seatService.createSeat(seatDto);
         ApiResponse<SeatDto> response = new ApiResponse<>(HttpStatus.CREATED.value(), "Seat created successfully", createdSeat);
@@ -59,6 +61,7 @@ public class SeatController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','SYSTEM')")
     public ResponseEntity<ApiResponse<Void>> deleteSeat(@PathVariable String id) {
         seatService.deleteSeat(id);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.NO_CONTENT.value(), "Seat deleted", null));

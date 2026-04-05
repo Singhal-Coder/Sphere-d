@@ -6,6 +6,7 @@ import com.fareye.sphere.d.entities.Booking;
 import com.fareye.sphere.d.entities.Seat;
 import com.fareye.sphere.d.entities.User;
 import com.fareye.sphere.d.entities.enums.BookingStatus;
+import com.fareye.sphere.d.entities.enums.Department;
 import com.fareye.sphere.d.entities.enums.SeatStatus;
 import com.fareye.sphere.d.exceptions.BusinessPolicyException;
 import com.fareye.sphere.d.exceptions.InvalidIdException;
@@ -41,7 +42,9 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingDto createBooking(BookingDto bookingDto) {
-        User user = userRepository.findById(idUtils.parseUserId(bookingDto.getUserId()).get())
+        User user = userRepository.findById(
+                idUtils.parseUserId(bookingDto.getUserId()).get()
+        )
             .orElseThrow(() -> new ResourceNotFoundException("User", "id", bookingDto.getUserId()));
         
         Seat seat = seatRepository.findById(idUtils.parseSeatId(bookingDto.getSeatId()).get())
@@ -85,6 +88,15 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public Page<BookingDto> getAllBookingsAfterDate(Pageable pageable, LocalDate date){
         return bookingRepository.findByBookedDateAfter(date, pageable)
+                .map(bookingMapper::toDto);
+    }
+
+    @Override
+    public Page<BookingDto> getAllBookingsAfterDateByDepartment(
+            Pageable pageable,
+            LocalDate date,
+            Department department) {
+        return bookingRepository.findByBookedDateAfterAndSeat_Department(date, department, pageable)
                 .map(bookingMapper::toDto);
     }
 

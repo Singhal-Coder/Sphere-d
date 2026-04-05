@@ -15,6 +15,7 @@ import com.fareye.sphere.d.utils.IdUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -27,6 +28,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final IdUtils idUtils;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserDto createUser(UserDto userDto) {
@@ -36,6 +38,7 @@ public class UserServiceImpl implements UserService {
         }
 
         User user = userMapper.toEntity(userDto);
+        user.setPassword(passwordEncoder.encode(userDto.getPassword()));
         User savedUser = userRepository.save(user);
         return userMapper.toDto(savedUser);
     }
@@ -71,6 +74,9 @@ public class UserServiceImpl implements UserService {
         }
 
         userMapper.updateUserFromDto(userDto, user);
+        if (userDto.getPassword() != null && !userDto.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        }
         User updatedUser = userRepository.save(user);
 
         return userMapper.toDto(updatedUser);

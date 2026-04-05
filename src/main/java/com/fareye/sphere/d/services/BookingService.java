@@ -1,6 +1,7 @@
 package com.fareye.sphere.d.services;
 
 import com.fareye.sphere.d.dtos.BookingDto;
+import com.fareye.sphere.d.entities.enums.Department;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -12,6 +13,11 @@ public interface BookingService {
     BookingDto getBookingById(String bookingId);
 
     Page<BookingDto> getAllBookingsAfterDate(Pageable pageable, LocalDate date);
+
+    Page<BookingDto> getAllBookingsAfterDateByDepartment(
+            Pageable pageable,
+            LocalDate date,
+            Department department);
 
     BookingDto cancelBooking(String bookingId);
 

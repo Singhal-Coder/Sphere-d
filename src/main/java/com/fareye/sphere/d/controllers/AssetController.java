@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -26,6 +27,7 @@ public class AssetController {
     private final SecurityUtils securityUtils;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('IT_SUPPORT_MEMBER','SYSTEM')")
     public ResponseEntity<ApiResponse<AssetDto>> createAsset(@Valid @RequestBody AssetDto assetDto) {
         AssetDto createdAsset = assetService.createAsset(assetDto);
         ApiResponse<AssetDto> response = new ApiResponse<>(HttpStatus.CREATED.value(), "Asset created", createdAsset);
@@ -34,6 +36,7 @@ public class AssetController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','IT_SUPPORT_MEMBER','SYSTEM') or @authz.isAssetOwner(#id)")
     public ResponseEntity<ApiResponse<AssetDto>> getAssetBySerial(@PathVariable String id) {
         AssetDto asset = assetService.getAssetBySerial(id);
         ApiResponse<AssetDto> response = new ApiResponse<>(HttpStatus.OK.value(), "Asset fetched", asset);
@@ -55,24 +58,28 @@ public class AssetController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','IT_SUPPORT_MEMBER','SYSTEM')")
     public ResponseEntity<ApiResponse<Page<AssetDto>>> getAllAssets(Pageable pageable) {
         Page<AssetDto> assets = assetService.getAllAssets(pageable);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Assets fetched", assets));
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('IT_SUPPORT_MEMBER','SYSTEM')")
     public ResponseEntity<ApiResponse<AssetDto>> updateAsset(@PathVariable String id, @Valid @RequestBody AssetDto assetDto) {
         AssetDto updatedAsset = assetService.updateAsset(id, assetDto);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Asset updated", updatedAsset));
     }
 
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('IT_SUPPORT_MEMBER','SYSTEM') or (hasRole('EMPLOYEE') and @authz.isAssetOwner(#id) and #status == T(com.fareye.sphere.d.entities.enums.AssetStatus).BROKEN)")
     public ResponseEntity<ApiResponse<String>> changeStatus(@PathVariable String id, @RequestParam AssetStatus status) {
         String msg = assetService.changeStatus(id, status);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), msg, null));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('IT_SUPPORT_MEMBER','SYSTEM')")
     public ResponseEntity<ApiResponse<Void>> deleteAsset(@PathVariable String id) {
         assetService.deleteAsset(id);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.NO_CONTENT.value(), "Asset deleted", null));

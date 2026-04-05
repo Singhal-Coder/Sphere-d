@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -28,8 +29,10 @@ public class BookingController {
     private final SecurityUtils securityUtils;
 
     @PostMapping("/{seat-id}")
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<BookingDto>> createBooking(@PathVariable("seat-id") String seatId, @Valid @RequestBody BookingDto bookingDto) {
         bookingDto.setSeatId(seatId);
+        bookingDto.setUserId(securityUtils.getCurrentUserId());
         BookingDto createdBooking = bookingService.createBooking(bookingDto);
         ApiResponse<BookingDto> response = new ApiResponse<>(HttpStatus.CREATED.value(), "Seat booked successfully", createdBooking);
         
@@ -40,6 +43,7 @@ public class BookingController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('SYSTEM') or @authz.isBookingOwner(#id)")
     public ResponseEntity<ApiResponse<BookingDto>> getBookingById(@PathVariable String id) {
         BookingDto booking = bookingService.getBookingById(id);
         ApiResponse<BookingDto> response = new ApiResponse<>(HttpStatus.OK.value(), "Booking fetched", booking);
@@ -57,20 +61,27 @@ public class BookingController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','SYSTEM','EMPLOYEE')")
     public ResponseEntity<ApiResponse<Page<BookingDto>>> getAllBookings(
-            Pageable pageable, 
+            Pageable pageable,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        Page<BookingDto> bookings = bookingService.getAllBookingsAfterDate(pageable, date);
+        Role role = securityUtils.getCurrentUserRole();
+        Page<BookingDto> bookings = role == Role.EMPLOYEE
+                ? bookingService.getAllBookingsAfterDateByDepartment(
+                        pageable, date, securityUtils.getCurrentUserDepartment())
+                : bookingService.getAllBookingsAfterDate(pageable, date);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Bookings fetched", bookings));
     }
 
     @PatchMapping("/{booking-id}/cancel") // URL matrix mein seat-id tha but functionally booking-id hona chahiye cancel ke liye
+    @PreAuthorize("hasRole('SYSTEM') or @authz.isBookingOwner(#bookingId)")
     public ResponseEntity<ApiResponse<BookingDto>> cancelBooking(@PathVariable("booking-id") String bookingId) {
         BookingDto cancelledBooking = bookingService.cancelBooking(bookingId);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "Booking cancelled", cancelledBooking));
     }
 
     @DeleteMapping
+    @PreAuthorize("hasRole('SYSTEM')")
     public ResponseEntity<ApiResponse<Void>> deleteBookings(
             @RequestParam(required = false) String bookingId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tillDate,

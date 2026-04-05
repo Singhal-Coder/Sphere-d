@@ -20,6 +20,8 @@ import com.fareye.sphere.d.repositories.UserRepository;
 import com.fareye.sphere.d.services.RequestService;
 import com.fareye.sphere.d.utils.IdUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -61,6 +63,14 @@ public class RequestServiceImpl implements RequestService {
         Request savedRequest = requestRepository.save(request);
         updateLogs(savedRequest);
         return requestMapper.toDto(savedRequest);
+    }
+
+    @Override
+    public Page<RequestDto> getAllRequests(Pageable pageable, Role role, Long currentUserId) {
+        if (role == Role.EMPLOYEE) {
+            return requestRepository.findByRequestedFor_UserId(currentUserId, pageable).map(requestMapper::toDto);
+        }
+        return requestRepository.findAll(pageable).map(requestMapper::toDto);
     }
 
     @Override
