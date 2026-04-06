@@ -26,7 +26,8 @@ public class RequestDto {
 
     private Role lastModifierRole;
 
-    @ValidFormattedId(type = "USER") @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    /** Writable on create/update so clients can set the subject user (e.g. employee creating own request). */
+    @ValidFormattedId(type = "USER")
     private String requestedForId;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
