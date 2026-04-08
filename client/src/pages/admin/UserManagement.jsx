@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { createUser, deleteUser, getUsers, updateUser } from '../../api/users.js'
 import { getPageContent } from '../../api/hal.js'
+import { useLookups } from '../../context/LookupsContext.jsx'
 import Modal from '../../components/ui/Modal.jsx'
 import Spinner from '../../components/ui/Spinner.jsx'
 import Badge from '../../components/ui/Badge.jsx'
@@ -11,13 +12,10 @@ const ROLES = [
   { value: 'admin', label: 'Admin' },
 ]
 
-const DEPTS = [
-  { value: 'it', label: 'IT' },
-  { value: 'project', label: 'Project' },
-  { value: 'culture', label: 'Culture' },
-]
-
 export default function UserManagement() {
+  const { departments } = useLookups()
+  const deptOptions = departments.map((d) => ({ value: String(d).toLowerCase(), label: d }))
+  const defaultDept = deptOptions[0]?.value || 'it'
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState(null)
@@ -30,7 +28,7 @@ export default function UserManagement() {
     password: '',
     fullName: '',
     role: 'employee',
-    department: 'it',
+    department: defaultDept,
   })
 
   const load = useCallback(async () => {
@@ -50,13 +48,22 @@ export default function UserManagement() {
     load()
   }, [load])
 
+  useEffect(() => {
+    if (!deptOptions.length) return
+    setForm((prev) =>
+      deptOptions.some((d) => d.value === prev.department)
+        ? prev
+        : { ...prev, department: defaultDept },
+    )
+  }, [deptOptions, defaultDept])
+
   function openAdd() {
     setForm({
       email: '',
       password: '',
       fullName: '',
       role: 'employee',
-      department: 'it',
+      department: defaultDept,
     })
     setAddOpen(true)
   }
@@ -251,7 +258,7 @@ export default function UserManagement() {
               onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
               className="w-full rounded border px-3 py-2 capitalize"
             >
-              {DEPTS.map((d) => (
+              {deptOptions.map((d) => (
                 <option key={d.value} value={d.value}>
                   {d.label}
                 </option>
@@ -327,7 +334,7 @@ export default function UserManagement() {
               onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
               className="w-full rounded border px-3 py-2 capitalize"
             >
-              {DEPTS.map((d) => (
+              {deptOptions.map((d) => (
                 <option key={d.value} value={d.value}>
                   {d.label}
                 </option>

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { createSeat, deleteSeat, getSeatsByDepartment } from '../../api/seats.js'
+import { useLookups } from '../../context/LookupsContext.jsx'
 import Spinner from '../../components/ui/Spinner.jsx'
 
-const DEPTS = ['IT', 'PROJECT', 'CULTURE']
-
 export default function SeatManagement() {
+  const { departments } = useLookups()
   const [tab, setTab] = useState('IT')
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -29,6 +29,11 @@ export default function SeatManagement() {
   useEffect(() => {
     load()
   }, [load])
+
+  useEffect(() => {
+    if (!departments.length) return
+    if (!departments.includes(tab)) setTab(departments[0])
+  }, [departments, tab])
 
   async function onSubmit(e) {
     e.preventDefault()
@@ -64,7 +69,7 @@ export default function SeatManagement() {
       <h1 className="text-2xl font-bold text-slate-900">Seat management</h1>
 
       <div className="flex gap-2 border-b border-slate-200">
-        {DEPTS.map((d) => (
+        {departments.map((d) => (
           <button
             key={d}
             type="button"

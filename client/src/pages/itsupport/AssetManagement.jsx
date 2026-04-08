@@ -6,23 +6,17 @@ import {
   updateAsset,
 } from '../../api/assets.js'
 import { getPageContent } from '../../api/hal.js'
+import { useLookups } from '../../context/LookupsContext.jsx'
 import Modal from '../../components/ui/Modal.jsx'
 import Spinner from '../../components/ui/Spinner.jsx'
 import Badge from '../../components/ui/Badge.jsx'
 
-const CATEGORIES = [
-  'laptop',
-  'phone',
-  'headphone',
-  'charger',
-  'bag',
-  'notebook',
-  'software',
-]
-
 const STATUSES = ['available', 'assigned', 'broken']
 
 export default function AssetManagement() {
+  const { categories } = useLookups()
+  const categoryValues = categories.map((c) => String(c).toLowerCase())
+  const defaultCategory = categoryValues[0] || 'laptop'
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState(null)
@@ -33,7 +27,7 @@ export default function AssetManagement() {
   const [form, setForm] = useState({
     serialNumber: '',
     name: '',
-    category: 'laptop',
+    category: defaultCategory,
     status: 'available',
     ownerId: '',
   })
@@ -55,11 +49,20 @@ export default function AssetManagement() {
     load()
   }, [load])
 
+  useEffect(() => {
+    if (!categoryValues.length) return
+    setForm((prev) =>
+      categoryValues.includes(prev.category)
+        ? prev
+        : { ...prev, category: defaultCategory },
+    )
+  }, [categoryValues, defaultCategory])
+
   function openAdd() {
     setForm({
       serialNumber: '',
       name: '',
-      category: 'laptop',
+      category: defaultCategory,
       status: 'available',
       ownerId: '',
     })
@@ -239,7 +242,7 @@ export default function AssetManagement() {
               onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
               className="mt-1 w-full rounded border px-3 py-2 capitalize"
             >
-              {CATEGORIES.map((c) => (
+              {categoryValues.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>
@@ -310,7 +313,7 @@ export default function AssetManagement() {
               onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
               className="mt-1 w-full rounded border px-3 py-2 capitalize"
             >
-              {CATEGORIES.map((c) => (
+              {categoryValues.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>

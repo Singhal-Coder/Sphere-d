@@ -11,19 +11,13 @@ import Badge from '../../components/ui/Badge.jsx'
 import Modal from '../../components/ui/Modal.jsx'
 import Spinner from '../../components/ui/Spinner.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
-
-const CATEGORIES = [
-  'laptop',
-  'phone',
-  'headphone',
-  'charger',
-  'bag',
-  'notebook',
-  'software',
-]
+import { useLookups } from '../../context/LookupsContext.jsx'
 
 export default function MyAssets() {
   const { user } = useAuth()
+  const { categories } = useLookups()
+  const categoryValues = categories.map((c) => String(c).toLowerCase())
+  const defaultCategory = categoryValues[0] || 'laptop'
   const [assets, setAssets] = useState([])
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
@@ -31,7 +25,7 @@ export default function MyAssets() {
   const [busyAsset, setBusyAsset] = useState(null)
   const [busyReq, setBusyReq] = useState(null)
   const [createOpen, setCreateOpen] = useState(false)
-  const [category, setCategory] = useState('laptop')
+  const [category, setCategory] = useState(defaultCategory)
   const [creating, setCreating] = useState(false)
 
   const load = useCallback(async () => {
@@ -65,6 +59,11 @@ export default function MyAssets() {
   useEffect(() => {
     load()
   }, [load])
+
+  useEffect(() => {
+    if (!categoryValues.length) return
+    if (!categoryValues.includes(category)) setCategory(defaultCategory)
+  }, [categoryValues, category, defaultCategory])
 
   async function reportBroken(serial) {
     setBusyAsset(serial)
@@ -271,7 +270,7 @@ export default function MyAssets() {
               onChange={(e) => setCategory(e.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
             >
-              {CATEGORIES.map((c) => (
+              {categoryValues.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>
